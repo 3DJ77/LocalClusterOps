@@ -1,0 +1,69 @@
+version: 1.2.9
+
+cache: true
+
+endpoints:
+  agents:
+    recursionLimit: 40
+    maxRecursionLimit: 80
+    disableBuilder: false
+    capabilities: ["deferred_tools", "execute_code", "context", "actions", "tools"]
+
+  custom:
+    - name: "Ollama-Local"
+      apiKey: "ollama-local"
+      baseURL: "http://127.0.0.1:11434/v1"
+      models:
+        default:
+          - "granite3.2-vision:2b"
+          - "gemma3:4b"
+          - "gemma4:26b"
+          - "gemma4:e4b"
+          - "vincentg/llama3.2-fluxassistant:uncensored"
+          - "codestral:latest"
+          - "mistral-nemo:latest"
+        fetch: true
+      titleConvo: true
+      titleModel: "gemma4:e4b"
+      summarize: false
+      summaryModel: "current_model"
+      modelDisplayLabel: "BCC Local"
+      dropParams: ["frequency_penalty", "presence_penalty", "user"]
+
+    - name: "Local-Bridge"
+      apiKey: "crew-bridge"
+      baseURL: "http://127.0.0.1:11436/v1"
+      models:
+        default:
+          - "gem"
+          - "master"
+          - "blaster"
+          - "monty"
+        fetch: false
+      titleConvo: true
+      titleModel: "gem"
+      summarize: false
+      summaryModel: "current_model"
+      modelDisplayLabel: "Bridge"
+      dropParams: ["frequency_penalty", "presence_penalty", "user", "temperature", "top_p"]
+
+    - name: "Miz-Direct"
+      apiKey: "miz-direct"
+      baseURL: "http://127.0.0.1:11437/v1"
+      models:
+        default:
+          - "gemma4:26b"
+          - "codestral:latest"
+          - "mistral-nemo:latest"
+          - "gemma4:e4b"
+        fetch: false
+      titleConvo: false
+      summarize: false
+      modelDisplayLabel: "Miz-Direct"
+      dropParams: ["frequency_penalty", "presence_penalty", "user"]
+
+fileConfig:
+  fileTokenLimit: 100000
+
+# Optional future section for a separate lightweight mobile/private profile
+# can be added as another custom endpoint with a small model set.

@@ -1,0 +1,25 @@
+.DS_Store
+Thumbs.db
+.aider*
+
+# CrewComms-V6 local runtime and developer state
+CrewComms-V6/.bcc-runtime/
+CrewComms-V6/.remember/
+CrewComms-V6/.turbo/
+CrewComms-V6/.venv/
+CrewComms-V6/.venv-mcp/
+CrewComms-V6/.venv-kiwix-mcp/
+CrewComms-V6/node_modules/
+CrewComms-V6/client/node_modules/
+CrewComms-V6/api/node_modules/
+CrewComms-V6/client/dist/
+CrewComms-V6/logs/
+CrewComms-V6/uploads/temp/
+CrewComms-V6/**/__pycache__/
+CrewComms-V6/**/*.pyc
+
+# Local secrets and generated local config
+CrewComms-V6/.env
+CrewComms-V6/.env.bak-*
+CrewComms-V6/librechat.yaml
+CrewComms-V6/docker-compose.override.yml
