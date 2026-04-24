@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""MCP server exposing notebook-extract to LibreChat agents (Miz-Media).
+"""MCP server exposing notebook-extract for local orchestration agents.
 
 Tool: notebook_extract(folder, compress=False, vision=False, deep=False, out_slug=None)
 Returns JSON with briefing_path, csv_list, vision_stats, wall_clock, exit_code.

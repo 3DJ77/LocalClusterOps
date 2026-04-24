@@ -17,7 +17,7 @@ const DragDropOverlay = memo(({ isActive }: DragDropOverlayProps) => {
             : 'pointer-events-none invisible opacity-0'
         } `}
         style={{
-          /** Tinted overlay that matches the CrewComms surface palette */
+          /** Tinted overlay that matches the LocalClusterOps surface palette */
           backgroundColor: 'rgba(7, 17, 31, 0.58)',
           backdropFilter: 'blur(10px)',
           willChange: 'opacity',
