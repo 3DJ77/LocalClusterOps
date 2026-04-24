@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""SPINE hotseat lock — Python helper compatible with crew-core/src/lease.rs.
+"""Hotseat lock - Python helper using a JSON lease file.
 
 Lock file shape (JSON):
     {"holder": "<identity>", "acquired": <unix_epoch_float>}
@@ -10,9 +10,9 @@ Zombie recovery: if the lock is held longer than `timeout` seconds, release it
 and log a warning before re-acquiring.
 
 Usage:
-    from spine_lock import SpineLock
+    from hotseat_lock import HotseatLock
 
-    with SpineLock("notebook-renderer"):
+    with HotseatLock("notebook-renderer"):
         # GPU-touching work ...
 """
 
@@ -25,20 +25,16 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_LOCK_PATH = "/tmp/spine_lock.json"
+DEFAULT_LOCK_PATH = "/tmp/hotseat_lock.json"
 DEFAULT_TIMEOUT = 300       # seconds before zombie recovery
 POLL_INTERVAL = 0.5         # seconds between acquire retries
 
 
 def _lock_path() -> Path:
-    """Resolve the lock file path, matching lease.rs env-var precedence."""
-    raw = (
-        os.environ.get("NUCRU_SPINE_LOCK_FILE")
-        or os.environ.get("SPINE_LOCK_FILE")
-        or DEFAULT_LOCK_PATH
-    )
+    """Resolve the lock file path using env-var precedence."""
+    raw = os.environ.get("HOTSEAT_LOCK_FILE") or DEFAULT_LOCK_PATH
     path = Path(raw.strip())
-    # Expand ~ the same way lease.rs does
+    # Expand ~ to support user-home lock locations.
     if str(path).startswith("~"):
         path = path.expanduser()
     return path
@@ -57,11 +53,11 @@ def _read_lock(path: Path) -> dict | None:
 
 
 def _write_lock(path: Path, holder: str) -> None:
-    """Write the lock file atomically (same-dir tempfile → rename)."""
+    """Write the lock file atomically (same-dir tempfile to rename)."""
     body = json.dumps({"holder": holder, "acquired": time.time()})
     parent = path.parent
     parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=str(parent), prefix=".spine_lock_", suffix=".tmp")
+    fd, tmp = tempfile.mkstemp(dir=str(parent), prefix=".hotseat_lock_", suffix=".tmp")
     try:
         os.write(fd, body.encode())
         os.close(fd)
@@ -84,13 +80,13 @@ def _release_lock(path: Path, holder: str) -> None:
             pass
 
 
-class SpineLock:
-    """Context-manager SPINE hotseat lock.
+class HotseatLock:
+    """Context-manager hotseat lock.
 
     Parameters
     ----------
     holder : str
-        Identity string written into the lock file (matches lease.rs ``holder``).
+        Identity string written into the lock file.
     timeout : float
         Seconds a foreign holder may hold the lock before zombie recovery kicks
         in. Default 300.
@@ -121,17 +117,17 @@ class SpineLock:
                 # Available
                 _write_lock(self._path, self.holder)
                 self._held = True
-                logger.debug("SPINE lock acquired by %s", self.holder)
+                logger.debug("Hotseat lock acquired by %s", self.holder)
                 return
             if lock.get("holder") == self.holder:
                 # Re-entrant
                 self._held = True
                 return
-            # Held by someone else — check zombie timeout
+            # Held by someone else - check zombie timeout.
             age = time.time() - float(lock.get("acquired", 0))
             if age > self.timeout:
                 logger.warning(
-                    "SPINE lock held by %s for %.0fs (>%ds timeout) — forcing release (zombie recovery)",
+                    "Hotseat lock held by %s for %.0fs (>%ds timeout) - forcing release (zombie recovery)",
                     lock["holder"],
                     age,
                     self.timeout,
@@ -139,7 +135,7 @@ class SpineLock:
                 _release_lock(self._path, lock["holder"])
                 continue  # retry immediately
             logger.debug(
-                "SPINE lock held by %s (%.0fs), waiting…",
+                "Hotseat lock held by %s (%.0fs), waiting...",
                 lock["holder"],
                 age,
             )
@@ -150,7 +146,7 @@ class SpineLock:
         if self._held:
             _release_lock(self._path, self.holder)
             self._held = False
-            logger.debug("SPINE lock released by %s", self.holder)
+            logger.debug("Hotseat lock released by %s", self.holder)
 
     # -- context manager ------------------------------------------------------
 

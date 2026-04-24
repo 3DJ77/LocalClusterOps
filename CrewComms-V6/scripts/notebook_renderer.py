@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import requests
 import yaml
 
-from spine_lock import SpineLock
+from hotseat_lock import HotseatLock
 
 logger = logging.getLogger(__name__)
 
@@ -89,14 +89,14 @@ class NotebookRenderer:
             )
             self.record("comfyui", artifact, {"route": "pending", "reason": "deferred_comfyui"})
             return f"[generated image deferred]({artifact.relative_to(self.report_dir).as_posix()})"
-        logger.info("Acquiring SPINE lock for comfyui render…")
-        with SpineLock("notebook-renderer"):
-            logger.info("SPINE lock acquired — starting comfyui render")
+        logger.info("Acquiring hotseat lock for comfyui render...")
+        with HotseatLock("notebook-renderer"):
+            logger.info("Hotseat lock acquired; starting comfyui render")
             if payload.get("workflow"):
                 artifact = self.render_comfyui_workflow(payload)
             else:
                 artifact = self.render_comfyui_a1111(payload)
-        logger.info("SPINE lock released after comfyui render")
+        logger.info("Hotseat lock released after comfyui render")
         return image_markdown(artifact, self.report_dir)
 
     def render_comfyui_a1111(self, payload):
