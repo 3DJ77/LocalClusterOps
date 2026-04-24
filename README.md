@@ -14,3 +14,8 @@ and release preparation can happen without touching the operational repo.
 - Treat `librechat.local.yaml` in the application snapshot as the canonical local config.
 - Keep private/internal naming out of release-facing labels and notes.
 - Keep runtime and environment-specific noise out of commits unless intentionally needed.
+
+## Release Guard
+
+- Run `bin/release-guard.sh` before push to validate naming and tree-shape rules.
+- Use `bin/release-guard.sh --allow-dirty` during local edits before commit.
