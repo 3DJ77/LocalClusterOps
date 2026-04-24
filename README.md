@@ -6,11 +6,11 @@ and release preparation can happen without touching the operational repo.
 
 ## Layout
 
-- `CrewComms-V6/` - active LibreChat-based app snapshot prepared for release
+- Main application snapshot directory at the repository root
 - `bin/` - repo-root helper wrappers for relocated tooling
 
 ## Working Rules
 
-- Treat `CrewComms-V6/librechat.local.yaml` as the canonical local config snapshot.
+- Treat `librechat.local.yaml` in the application snapshot as the canonical local config.
 - Keep private/internal naming out of release-facing labels and notes.
 - Keep runtime and environment-specific noise out of commits unless intentionally needed.
