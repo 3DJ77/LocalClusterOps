@@ -35,6 +35,7 @@ const configureSocialLogins = require('./socialLogins');
 const { getAppConfig } = require('./services/Config');
 const staticCache = require('./utils/staticCache');
 const optionalJwtAuth = require('./middleware/optionalJwtAuth');
+const { isLocalAuthEnabled } = require('./middleware/localAuth');
 const noIndex = require('./middleware/noIndex');
 const routes = require('./routes');
 
@@ -133,7 +134,11 @@ const startServer = async () => {
 
   /* OAUTH */
   app.use(passport.initialize());
-  passport.use(jwtLogin());
+  if (isLocalAuthEnabled()) {
+    logger.info('Local auth enabled; skipping JWT passport strategy registration');
+  } else {
+    passport.use(jwtLogin());
+  }
   passport.use(passportLogin());
 
   /* LDAP Auth */

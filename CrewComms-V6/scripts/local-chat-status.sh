@@ -10,12 +10,17 @@ APP_URL="http://${APP_HOST}:${APP_PORT}"
 status_service() {
   local name="$1"
   local pid_file="${RUNTIME_DIR}/${name}.pid"
+  local pid=""
 
-  if [[ -f "${pid_file}" ]] && kill -0 "$(cat "${pid_file}")" 2>/dev/null; then
-    echo "[local] ${name}: running pid $(cat "${pid_file}")"
-  else
-    echo "[local] ${name}: stopped"
+  if [[ -f "${pid_file}" ]]; then
+    pid="$(cat "${pid_file}" 2>/dev/null || true)"
+    if [[ -n "${pid}" ]] && kill -0 "${pid}" 2>/dev/null; then
+      echo "[local] ${name}: running pid ${pid}"
+      return
+    fi
   fi
+
+  echo "[local] ${name}: stopped"
 }
 
 status_service mongo
