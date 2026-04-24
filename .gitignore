@@ -23,3 +23,6 @@ CrewComms-V6/.env
 CrewComms-V6/.env.bak-*
 CrewComms-V6/librechat.yaml
 CrewComms-V6/docker-compose.override.yml
+
+# Local workspace file
+CrewComms-upload.code-workspace
