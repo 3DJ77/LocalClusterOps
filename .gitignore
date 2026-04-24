@@ -3,7 +3,7 @@ Thumbs.db
 .aider*
 
 # CrewComms-V6 local runtime and developer state
-CrewComms-V6/.bcc-runtime/
+CrewComms-V6/.local-runtime/
 CrewComms-V6/.remember/
 CrewComms-V6/.turbo/
 CrewComms-V6/.venv/

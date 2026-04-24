@@ -5,9 +5,9 @@ const LOCAL_USER_ID = '6619d1a7f3a16b3a4f0d0001';
 const localUser = {
   id: LOCAL_USER_ID,
   _id: LOCAL_USER_ID,
-  username: 'jay-local',
-  email: 'jay@local',
-  name: 'Jay',
+  username: 'local-operator',
+  email: 'operator@local',
+  name: 'Local Operator',
   avatar: '',
   role: SystemRoles.ADMIN,
   provider: 'local',

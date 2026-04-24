@@ -7,6 +7,7 @@ Returns JSON with briefing_path, csv_list, vision_stats, wall_clock, exit_code.
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import time
@@ -14,8 +15,9 @@ from pathlib import Path
 
 from mcp.server.fastmcp import FastMCP
 
-EXTRACT_BIN = "/home/jay/bin/notebook-extract"
-NOTEBOOK_ROOT = Path("/home/jay/Notebook")
+HOME_DIR = Path.home()
+EXTRACT_BIN = os.environ.get("NOTEBOOK_EXTRACT_BIN", str(HOME_DIR / "bin" / "notebook-extract"))
+NOTEBOOK_ROOT = Path(os.environ.get("NOTEBOOK_ROOT", str(HOME_DIR / "Notebook"))).expanduser()
 
 mcp = FastMCP("notebook")
 
@@ -35,7 +37,7 @@ def notebook_extract(
         compress: Run Ollama compression pass over Misc Source Text.
         vision: Run Moondream bulk vision pass on discovered images.
         deep: Use Granite Vision deep tier (requires vision=True).
-        out_slug: Override the report output slug under /home/jay/Notebook/.
+        out_slug: Override the report output slug under NOTEBOOK_ROOT.
 
     Returns:
         JSON string with briefing_path, csv_list, vision_stats, wall_clock, exit_code.
@@ -84,7 +86,7 @@ def _find_output_dir(stdout: str, src: Path, slug: str | None) -> Path | None:
     if slug:
         cand = NOTEBOOK_ROOT / slug
         return cand if cand.is_dir() else None
-    m = re.search(r"(/home/jay/Notebook/[^\s]+)", stdout)
+    m = re.search(rf"({re.escape(str(NOTEBOOK_ROOT))}/[^\s]+)", stdout)
     if m:
         p = Path(m.group(1))
         if p.is_dir():

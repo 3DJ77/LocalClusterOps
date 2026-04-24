@@ -37,7 +37,7 @@ const { determineFileType } = require('~/server/utils');
 const { STTService } = require('./Audio/STTService');
 const db = require('~/models');
 
-const autoContextMessageEndpoints = new Set(['crew-bridge', 'crew_bridge', 'crew bridge']);
+const autoContextMessageEndpoints = new Set(['task-runtime', 'task_runtime', 'task runtime']);
 
 const normalizeUploadEndpoint = (value = '') => String(value).trim().toLowerCase();
 

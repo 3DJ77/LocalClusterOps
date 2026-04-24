@@ -37,9 +37,9 @@ const LOCAL_AUTH_ENABLED = process.env.REACT_APP_LOCAL_AUTH !== '0';
 const LOCAL_TOKEN = 'local-operator-token';
 const LOCAL_USER: t.TUser = {
   id: '6619d1a7f3a16b3a4f0d0001',
-  username: 'jay-local',
-  email: 'jay@local',
-  name: 'Jay',
+  username: 'local-operator',
+  email: 'operator@local',
+  name: 'Local Operator',
   avatar: '',
   role: SystemRoles.ADMIN,
   provider: 'local',

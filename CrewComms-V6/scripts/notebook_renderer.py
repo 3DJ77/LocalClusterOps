@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 
 TAG_PATTERN = re.compile(r"```(comfyui|chart|laser|kicad|dxf|stl)\s*\n(.*?)\n```", re.DOTALL)
-NOTEBOOK_ROOT = Path("/home/jay/Notebook")
+NOTEBOOK_ROOT = Path.home() / "Notebook"
 DEFAULT_A1111_URL = "http://127.0.0.1:8189"
 DEFAULT_COMFYUI_URL = "http://127.0.0.1:8188"
 
@@ -286,7 +286,7 @@ def main():
     parser = argparse.ArgumentParser(description="Render Notebook media-tag Markdown into artifacts")
     parser.add_argument("input", help="Markdown source file containing fenced media tags")
     parser.add_argument("--report-name", help="Notebook report folder name")
-    parser.add_argument("--output", help="Output markdown path; defaults to /home/jay/Notebook/<report>/rendered.md")
+    parser.add_argument("--output", help="Output markdown path; defaults to ~/Notebook/<report>/rendered.md")
     parser.add_argument("--a1111-url", default=DEFAULT_A1111_URL)
     parser.add_argument("--comfyui-url", default=DEFAULT_COMFYUI_URL)
     parser.add_argument("--skip-comfyui", action="store_true", help="Do not render comfyui tags; emit deferred placeholders instead")

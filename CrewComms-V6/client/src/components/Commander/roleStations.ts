@@ -1,7 +1,7 @@
 import { Constants, EModelEndpoint } from 'librechat-data-provider';
 import type { Agent, TConversation } from 'librechat-data-provider';
 
-export type CrewStation = {
+export type RoleStation = {
   id: string;
   name: string;
   state: string;
@@ -16,7 +16,7 @@ export type CrewStation = {
   promptPrefix?: string;
 };
 
-const crewPrompt = ({
+const rolePrompt = ({
   name,
   lane,
   rules,
@@ -24,9 +24,9 @@ const crewPrompt = ({
   name: string;
   lane: string;
   rules: string;
-}) => `You are the ${name} lane in the CrewComms stack.
+}) => `You are the ${name} role in the built-in role stack.
 
-Active crew lane: ${lane}.
+Active role: ${lane}.
 
 The operator's directions are the source of truth unless a hard safety limit or unavailable tool blocks the request.
 
@@ -38,21 +38,21 @@ Operational rules:
 2. State the next action in one short sentence.
 3. If blocked, name the blocker plainly.
 4. Do not claim tool work, dispatch, file edits, or runtime actions are complete unless they actually happened.
-5. Keep the response focused on execution and crew coordination.`;
+5. Keep the response focused on execution and clear coordination.`;
 
-export const crewStations: CrewStation[] = [
+export const roleStations: RoleStation[] = [
   {
-    id: 'silvia',
+    id: 'command',
     name: 'Command',
     state: 'Operator coordination',
-    endpoint: 'Ollama-Local',
+    endpoint: 'Local Runtime',
     endpointType: 'custom',
-    model: 'silvia:locutous',
-    runtime: 'Ollama local',
+    model: 'gemma4:e4b',
+    runtime: 'Local runtime',
     lease: 'none / fast',
     accent: 'from-[#2f7fff] via-[#74adff] to-[#dbe9ff]',
     dot: 'bg-[#74adff]',
-    promptPrefix: crewPrompt({
+    promptPrefix: rolePrompt({
       name: 'command',
       lane: 'operator coordination',
       rules:
@@ -60,17 +60,17 @@ export const crewStations: CrewStation[] = [
     }),
   },
   {
-    id: 'gem',
+    id: 'primary',
     name: 'Primary',
     state: 'Primary orchestration',
-    endpoint: 'Local-Bridge',
+    endpoint: 'Task Runtime',
     endpointType: 'custom',
-    model: 'gem',
-    runtime: 'Local-Bridge :11436',
+    model: 'mistral-nemo:latest',
+    runtime: 'Bridge runtime',
     lease: 'fast',
     accent: 'from-[#2f7fff] via-[#74adff] to-[#dbe9ff]',
     dot: 'bg-[#74adff]',
-    promptPrefix: crewPrompt({
+    promptPrefix: rolePrompt({
       name: 'primary orchestration',
       lane: 'primary local orchestration',
       rules:
@@ -78,17 +78,17 @@ export const crewStations: CrewStation[] = [
     }),
   },
   {
-    id: 'master',
+    id: 'control',
     name: 'Control',
     state: 'Fast local control',
-    endpoint: 'Local-Bridge',
+    endpoint: 'Task Runtime',
     endpointType: 'custom',
-    model: 'master',
-    runtime: 'Local-Bridge :11436',
+    model: 'gemma4:e4b',
+    runtime: 'Bridge runtime',
     lease: 'fast',
     accent: 'from-[#2f7fff] via-[#74adff] to-[#dbe9ff]',
     dot: 'bg-[#74adff]',
-    promptPrefix: crewPrompt({
+    promptPrefix: rolePrompt({
       name: 'control',
       lane: 'fast local control',
       rules:
@@ -96,35 +96,35 @@ export const crewStations: CrewStation[] = [
     }),
   },
   {
-    id: 'blaster',
+    id: 'deep-work',
     name: 'Deep Work',
     state: 'Deep technical execution',
-    endpoint: 'Local-Bridge',
+    endpoint: 'Task Runtime',
     endpointType: 'custom',
-    model: 'blaster',
-    runtime: 'Local-Bridge :11436',
+    model: 'codestral:latest',
+    runtime: 'Bridge runtime',
     lease: 'deep',
     accent: 'from-[#2f7fff] via-[#74adff] to-[#dbe9ff]',
     dot: 'bg-[#74adff]',
-    promptPrefix: crewPrompt({
+    promptPrefix: rolePrompt({
       name: 'deep work',
       lane: 'deep technical work',
       rules:
-        '- Take hard technical execution, careful debugging, and deeper reasoning tasks.\n- Use the Locutous codestral:22b worker path through the bridge runtime.\n- Return results tied to the operator request and distinguish analysis from completed action.',
+        '- Take hard technical execution, careful debugging, and deeper reasoning tasks.\n- Use the configured bridge execution path for heavier work.\n- Return results tied to the operator request and distinguish analysis from completed action.',
     }),
   },
   {
-    id: 'monty',
+    id: 'planner',
     name: 'Planner',
     state: 'Secondary planning lane',
-    endpoint: 'Local-Bridge',
+    endpoint: 'Task Runtime',
     endpointType: 'custom',
-    model: 'monty',
-    runtime: 'Local-Bridge :11436',
+    model: 'gemma4:26b',
+    runtime: 'Bridge runtime',
     lease: 'fast',
     accent: 'from-[#2f7fff] via-[#74adff] to-[#dbe9ff]',
     dot: 'bg-[#74adff]',
-    promptPrefix: crewPrompt({
+    promptPrefix: rolePrompt({
       name: 'planning',
       lane: 'secondary orchestration',
       rules:
@@ -132,17 +132,17 @@ export const crewStations: CrewStation[] = [
     }),
   },
   {
-    id: 'arc',
+    id: 'routing',
     name: 'Routing',
     state: 'Orchestration support',
-    endpoint: 'Ollama-Local',
+    endpoint: 'Local Runtime',
     endpointType: 'custom',
-    model: 'arc:locutous',
-    runtime: 'Ollama local',
+    model: 'gemma3:4b',
+    runtime: 'Local runtime',
     lease: 'fast',
     accent: 'from-[#2f7fff] via-[#74adff] to-[#dbe9ff]',
     dot: 'bg-[#74adff]',
-    promptPrefix: crewPrompt({
+    promptPrefix: rolePrompt({
       name: 'routing',
       lane: 'orchestration support',
       rules:
@@ -150,26 +150,26 @@ export const crewStations: CrewStation[] = [
     }),
   },
   {
-    id: 'ark',
+    id: 'research',
     name: 'Research',
     state: 'Research and archive support',
-    endpoint: 'Ollama-Local',
+    endpoint: 'Local Runtime',
     endpointType: 'custom',
-    model: 'ark:latest',
-    runtime: 'Ollama local',
+    model: 'mistral-nemo:latest',
+    runtime: 'Local runtime',
     lease: 'fast',
     accent: 'from-[#2f7fff] via-[#74adff] to-[#dbe9ff]',
     dot: 'bg-[#74adff]',
-    promptPrefix: crewPrompt({
+    promptPrefix: rolePrompt({
       name: 'research',
       lane: 'archive and research',
       rules:
-        '- Organize context, records, and retrieval-style findings.\n- Separate known facts from inference.\n- Keep summaries useful for crew handoff and later verification.',
+        '- Organize context, records, and retrieval-style findings.\n- Separate known facts from inference.\n- Keep summaries useful for later handoff and verification.',
     }),
   },
 ];
 
-export function createAgentCrewStation(agent: Agent, index: number): CrewStation {
+export function createAgentRoleStation(agent: Agent, index: number): RoleStation {
   const model = agent.model ?? '';
   return {
     id: `agent:${agent.id}`,
@@ -186,9 +186,9 @@ export function createAgentCrewStation(agent: Agent, index: number): CrewStation
   };
 }
 
-export function getCrewStationForConversation(
+export function getRoleStationForConversation(
   conversation: TConversation | null,
-  stations: CrewStation[] = crewStations,
+  stations: RoleStation[] = roleStations,
 ) {
   return (
     stations.find((station) => {
@@ -208,9 +208,9 @@ export function getCrewStationForConversation(
   );
 }
 
-export function applyCrewStation(
+export function applyRoleStation(
   conversation: TConversation | null,
-  station: CrewStation,
+  station: RoleStation,
 ): TConversation {
   const agentSettings = station.agentId
     ? {

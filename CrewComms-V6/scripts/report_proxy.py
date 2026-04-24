@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
-"""Miz-Media direct proxy.
+"""Local report proxy.
 
 OpenAI-compatible endpoint on 127.0.0.1:11437 that forwards to Ollama
 (127.0.0.1:11434). On the first user turn of a conversation, scans the
-user message for a /home/jay/... path; if found, runs notebook-extract
+user message for a local filesystem path; if found, runs notebook-extract
 and prepends the briefing + CSV heads as a system message.
 
-Miz-Media sees a pre-loaded context and authors from it — no tool calls,
+The authoring model sees a pre-loaded context and authors from it — no tool calls,
 no MCP, no agent loops.
 """
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -23,12 +24,13 @@ from pathlib import Path
 from urllib import request as urlrequest
 
 OLLAMA = "http://127.0.0.1:11434"
-EXTRACT_BIN = "/home/jay/bin/notebook-extract"
-NOTEBOOK_ROOT = Path("/home/jay/Notebook")
-GRAVEYARD_ROOT = Path("/home/jay/Gen-Graveyard")
+HOME_DIR = Path.home()
+EXTRACT_BIN = os.environ.get("NOTEBOOK_EXTRACT_BIN", str(HOME_DIR / "bin" / "notebook-extract"))
+NOTEBOOK_ROOT = Path(os.environ.get("NOTEBOOK_ROOT", str(HOME_DIR / "Notebook"))).expanduser()
+GRAVEYARD_ROOT = Path(os.environ.get("REPORT_ARCHIVE_ROOT", str(HOME_DIR / "Generated-Archives"))).expanduser()
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 SYSTEM_PROMPT_PATH = PROJECT_ROOT / "prompts" / "notebook-agent-system.md"
-PATH_RE = re.compile(r"(/home/jay/[^\s'\"`)\]]+)")
+PATH_RE = re.compile(r"((?:~|/)[^\s'\"`)\]]+)")
 BRIEFING_MARKER = "PRE-LOADED BRIEFING (notebook-extract \u2192"
 FORMAT_REMINDER_MARKER = "NOTEBOOK FORMAT REMINDER"
 FENCE_RE = re.compile(r"```(comfyui|chart|laser|kicad|dxf|stl)\s*\n", re.IGNORECASE)
@@ -93,7 +95,7 @@ def run_extract(folder: str) -> dict:
         [EXTRACT_BIN, "--folder", str(src)],
         capture_output=True, text=True, timeout=1800,
     )
-    m = re.search(r"(/home/jay/Notebook/[^\s]+)", proc.stdout)
+    m = re.search(rf"({re.escape(str(NOTEBOOK_ROOT))}/[^\s]+)", proc.stdout)
     out = Path(m.group(1)) if m else NOTEBOOK_ROOT / default_report_slug(src.name)
     briefing = out / "briefing.md"
     if not briefing.exists():
@@ -122,8 +124,9 @@ def build_inject(ext: dict) -> str:
         )
     return (
         f"## {BRIEFING_MARKER} (notebook-extract → {ext['dir']})\n\n"
-        f"Author the report using ONLY the facts below. The user's home is "
-        f"/home/jay — never emit any other username. Do not claim to call "
+        f"Author the report using ONLY the facts below. Use the current user's "
+        f"real home directory when you need one. Do not invent usernames or "
+        f"placeholder home paths. Do not claim to call "
         f"any file tools; everything you need is already in this system "
         f"message.\n\n"
         f"### briefing.md\n\n{ext['briefing']}\n\n"
@@ -179,7 +182,7 @@ def build_plan_prompt(ext: dict, folder: str, user_request: str) -> tuple[str, s
         for entry in csvs
     ) or "- none found"
     system = (
-        "You are a report planner for Jay's Notebook pipeline.\n"
+        "You are a report planner for the local Notebook pipeline.\n"
         "Return JSON only. Do not write Markdown. Do not wrap the JSON in code fences.\n"
         "Plan a rich report using only these block types: paragraph, bullet_list, real_image, generated_image, chart, warning.\n"
         "Use real_image when a discovered image directly documents the subject.\n"
@@ -292,8 +295,8 @@ def validate_generated_markdown(markdown: str) -> list[str]:
         chart_type = type_match.group(1).strip().lower()
         if chart_type not in SUPPORTED_CHART_TYPES:
             issues.append(f"contains unsupported chart type: {chart_type}")
-    for match in re.finditer(r"!\[[^\]]*\]\((/home/jay/[^)\s]+)\)", markdown):
-        image_path = Path(match.group(1))
+    for match in re.finditer(r"!\[[^\]]*\]\(((?:~|/)[^)\s]+)\)", markdown):
+        image_path = Path(match.group(1)).expanduser()
         if not image_path.exists():
             issues.append(f"contains missing real image path: {image_path}")
     return issues
@@ -511,7 +514,7 @@ class Proxy(BaseHTTPRequestHandler):
             handle.write(f"[{timestamp}] {text}\n")
 
     def _status_path(self, folder_path: Path) -> Path:
-        return folder_path / "mizmedia-status.log"
+        return folder_path / "report-status.log"
 
     def _heartbeat_worker(self, stop_event: threading.Event, status_path: Path):
         started_at = time.monotonic()
@@ -520,7 +523,7 @@ class Proxy(BaseHTTPRequestHandler):
             message = f"Still working. Status log: `{status_path}`"
             now = time.monotonic()
             if now - last_termination_reminder >= TERMINATION_REMINDER_INTERVAL_SECONDS:
-                message += " If Jay wants to terminate this run, ask once now; otherwise keep it going."
+                message += " If the user wants to terminate this run, ask once now; otherwise keep it going."
                 last_termination_reminder = now
             self._append_status(status_path, "heartbeat: planner/render still running")
             try:
@@ -662,7 +665,7 @@ class Proxy(BaseHTTPRequestHandler):
         chunk = {
             "id": "chatcmpl-proxy",
             "object": "chat.completion.chunk",
-            "model": "miz-orchestrator",
+            "model": "orchestrator",
             "choices": [{"index": 0, "delta": {"content": text}, "finish_reason": None}]
         }
         data = f"data: {json.dumps(chunk)}\n\n".encode("utf-8")
@@ -673,7 +676,7 @@ class Proxy(BaseHTTPRequestHandler):
         chunk = {
             "id": "chatcmpl-proxy",
             "object": "chat.completion.chunk",
-            "model": "miz-orchestrator",
+            "model": "orchestrator",
             "choices": [{"index": 0, "delta": {}, "finish_reason": finish_reason}],
         }
         data = f"data: {json.dumps(chunk)}\n\n".encode("utf-8")
@@ -687,7 +690,7 @@ class Proxy(BaseHTTPRequestHandler):
 
     def _run_publish(self, source_md: Path, folder_path: Path, *, skip_comfyui: bool = False, log_name: str = "publish.log"):
         """Run notebook-publish and return its exit code."""
-        publish_bin = "/home/jay/bin/notebook-publish"
+        publish_bin = os.environ.get("NOTEBOOK_PUBLISH_BIN", str(HOME_DIR / "bin" / "notebook-publish"))
         log_path = folder_path / log_name
         cmd = [publish_bin, str(source_md), "--no-open"]
         if skip_comfyui:
@@ -723,5 +726,5 @@ class Proxy(BaseHTTPRequestHandler):
 
 if __name__ == "__main__":
     srv = ThreadingHTTPServer(("127.0.0.1", 11437), Proxy)
-    sys.stderr.write("[proxy] listening on 127.0.0.1:11437 -> 11434\n")
+    sys.stderr.write("[proxy] listening on 127.0.0.1:11437 -> upstream 11434\n")
     srv.serve_forever()

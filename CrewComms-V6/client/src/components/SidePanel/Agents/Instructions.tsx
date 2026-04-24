@@ -8,7 +8,7 @@ import type { TSpecialVarLabel } from 'librechat-data-provider';
 import type { AgentForm } from '~/common';
 import { cn, defaultTextProps, removeFocusOutlines } from '~/utils';
 import { useLocalize } from '~/hooks';
-import { crewProfiles } from './crewProfiles';
+import { presetProfiles } from './presetProfiles';
 
 const inputClass = cn(
   defaultTextProps,
@@ -48,7 +48,7 @@ export default function Instructions() {
     setIsMenuOpen(false);
   };
 
-  const handleApplyPreset = (preset: (typeof crewProfiles)[number]) => {
+  const handleApplyPreset = (preset: (typeof presetProfiles)[number]) => {
     setValue('instructions', preset.instructions, {
       shouldDirty: true,
       shouldTouch: true,
@@ -83,7 +83,7 @@ export default function Instructions() {
                   {profileButtonLabel}
                 </Menu.MenuButton>
               }
-              items={crewProfiles.map((preset) => ({
+              items={presetProfiles.map((preset) => ({
                 label: preset.label,
                 description: preset.description,
                 onClick: () => handleApplyPreset(preset),

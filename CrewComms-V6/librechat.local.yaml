@@ -10,8 +10,8 @@ endpoints:
     capabilities: ["deferred_tools", "execute_code", "context", "actions", "tools"]
 
   custom:
-    - name: "Ollama-Local"
-      apiKey: "ollama-local"
+    - name: "Local Runtime"
+      apiKey: "local-runtime"
       baseURL: "http://127.0.0.1:11434/v1"
       models:
         default:
@@ -27,28 +27,28 @@ endpoints:
       titleModel: "gemma4:e4b"
       summarize: false
       summaryModel: "current_model"
-      modelDisplayLabel: "BCC Local"
+      modelDisplayLabel: "Local Runtime"
       dropParams: ["frequency_penalty", "presence_penalty", "user"]
 
-    - name: "Local-Bridge"
-      apiKey: "crew-bridge"
+    - name: "Task Runtime"
+      apiKey: "task-runtime"
       baseURL: "http://127.0.0.1:11436/v1"
       models:
         default:
-          - "gem"
-          - "master"
-          - "blaster"
-          - "monty"
+          - "mistral-nemo:latest"
+          - "gemma4:e4b"
+          - "codestral:latest"
+          - "gemma4:26b"
         fetch: false
       titleConvo: true
-      titleModel: "gem"
+      titleModel: "gemma4:e4b"
       summarize: false
       summaryModel: "current_model"
-      modelDisplayLabel: "Bridge"
+      modelDisplayLabel: "Task Runtime"
       dropParams: ["frequency_penalty", "presence_penalty", "user", "temperature", "top_p"]
 
-    - name: "Miz-Direct"
-      apiKey: "miz-direct"
+    - name: "Direct Runtime"
+      apiKey: "direct-runtime"
       baseURL: "http://127.0.0.1:11437/v1"
       models:
         default:
@@ -59,7 +59,7 @@ endpoints:
         fetch: false
       titleConvo: false
       summarize: false
-      modelDisplayLabel: "Miz-Direct"
+      modelDisplayLabel: "Direct Runtime"
       dropParams: ["frequency_penalty", "presence_penalty", "user"]
 
 fileConfig:

@@ -2,9 +2,9 @@
 """Deterministic Notebook source extractor.
 
 Reads configs/extract/<name>.yml and writes:
-    /home/jay/Notebook/<report_slug>/briefing.md
-    /home/jay/Notebook/<report_slug>/data/*.csv
-    /home/jay/Notebook/<report_slug>/extract.log
+    ~/Notebook/<report_slug>/briefing.md
+    ~/Notebook/<report_slug>/data/*.csv
+    ~/Notebook/<report_slug>/extract.log
 """
 
 import argparse
@@ -33,7 +33,7 @@ from bs4 import BeautifulSoup
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 CONFIG_ROOT = PROJECT_ROOT / "configs" / "extract"
-NOTEBOOK_ROOT = Path("/home/jay/Notebook")
+NOTEBOOK_ROOT = Path.home() / "Notebook"
 LOG_FORMAT = "%(asctime)s %(levelname)s %(message)s"
 GENERIC_EXTENSIONS = {".md", ".txt", ".html", ".htm", ".pdf", ".odt", ".docx", ".rtf"}
 GENERIC_DENYLIST_DIRS = {

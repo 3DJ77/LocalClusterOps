@@ -2,7 +2,7 @@
  * @jest-environment @happy-dom/jest-environment
  */
 import React from 'react';
-import { render, act } from '@testing-library/react';
+import { render, act, fireEvent } from '@testing-library/react';
 import { RecoilRoot } from 'recoil';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
@@ -72,11 +72,20 @@ const authConfig: TAuthConfig = { loginRedirect: '/login', test: true };
 function TestConsumer() {
   const ctx = useAuthContext();
   return (
-    <div
-      data-testid="consumer"
-      data-authenticated={ctx.isAuthenticated}
-      data-roles={JSON.stringify(ctx.roles ?? {})}
-    />
+    <>
+      <div
+        data-testid="consumer"
+        data-authenticated={ctx.isAuthenticated}
+        data-role={ctx.user?.role ?? ''}
+        data-roles={JSON.stringify(ctx.roles ?? {})}
+      />
+      <button data-testid="logout-default" onClick={() => ctx.logout()}>
+        logout
+      </button>
+      <button data-testid="logout-custom" onClick={() => ctx.logout('/c/custom')}>
+        logout custom
+      </button>
+    </>
   );
 }
 
@@ -98,7 +107,7 @@ function renderProvider() {
   );
 }
 
-/** Renders without test:true so silentRefresh actually runs */
+/** Renders without test:true; local auth still short-circuits refresh by default. */
 function renderProviderLive() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -249,7 +258,7 @@ describe('AuthContextProvider — logout onSuccess/onError handling', () => {
   });
 });
 
-describe('AuthContextProvider — silentRefresh post-login redirect', () => {
+describe('AuthContextProvider — local auth startup', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     sessionStorage.clear();
@@ -260,109 +269,64 @@ describe('AuthContextProvider — silentRefresh post-login redirect', () => {
     window.history.replaceState({}, '', '/');
   });
 
-  it('navigates to stored sessionStorage redirect after successful token refresh', () => {
+  it('boots into an authenticated local operator session without token refresh', () => {
     jest.useFakeTimers();
     sessionStorage.setItem(SESSION_KEY, '/c/new?endpoint=bedrock&model=claude-sonnet-4-6');
 
-    renderProviderLive();
+    const { getByTestId } = renderProviderLive();
 
-    expect(mockRefreshMutate).toHaveBeenCalledTimes(1);
-    const [, refreshOptions] = mockRefreshMutate.mock.calls[0] as [
-      unknown,
-      { onSuccess: (data: unknown) => void },
-    ];
-
-    act(() => {
-      refreshOptions.onSuccess({ user: { id: '1', role: 'USER' }, token: 'new-token' });
-    });
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
-
-    expect(mockNavigate).toHaveBeenCalledWith('/c/new?endpoint=bedrock&model=claude-sonnet-4-6', {
-      replace: true,
-    });
-    expect(sessionStorage.getItem(SESSION_KEY)).toBeNull();
+    expect(mockRefreshMutate).not.toHaveBeenCalled();
+    expect(getByTestId('consumer').getAttribute('data-authenticated')).toBe('true');
+    expect(getByTestId('consumer').getAttribute('data-role')).toBe('ADMIN');
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem(SESSION_KEY)).toBe('/c/new?endpoint=bedrock&model=claude-sonnet-4-6');
     jest.useRealTimers();
   });
 
-  it('navigates to current URL when no stored redirect exists', () => {
+  it('keeps the current URL when no stored redirect exists', () => {
     jest.useFakeTimers();
     window.history.replaceState({}, '', '/c/new');
 
-    renderProviderLive();
+    const { getByTestId } = renderProviderLive();
 
-    expect(mockRefreshMutate).toHaveBeenCalledTimes(1);
-    const [, refreshOptions] = mockRefreshMutate.mock.calls[0] as [
-      unknown,
-      { onSuccess: (data: unknown) => void },
-    ];
-
-    act(() => {
-      refreshOptions.onSuccess({ user: { id: '1', role: 'USER' }, token: 'new-token' });
-    });
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
-
-    expect(mockNavigate).toHaveBeenCalledWith('/c/new', { replace: true });
+    expect(mockRefreshMutate).not.toHaveBeenCalled();
+    expect(getByTestId('consumer').getAttribute('data-authenticated')).toBe('true');
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(window.location.pathname).toBe('/c/new');
     jest.useRealTimers();
   });
 
-  it('does not re-trigger silentRefresh after successful redirect', () => {
+  it('does not re-trigger remote silentRefresh work after initial local auth bootstrap', () => {
     jest.useFakeTimers();
     sessionStorage.setItem(SESSION_KEY, '/c/abc?endpoint=bedrock');
 
     renderProviderLive();
 
-    expect(mockRefreshMutate).toHaveBeenCalledTimes(1);
-    const [, refreshOptions] = mockRefreshMutate.mock.calls[0] as [
-      unknown,
-      { onSuccess: (data: unknown) => void },
-    ];
-    mockRefreshMutate.mockClear();
-
-    act(() => {
-      refreshOptions.onSuccess({ user: { id: '1', role: 'USER' }, token: 'new-token' });
-    });
     act(() => {
       jest.advanceTimersByTime(100);
     });
 
-    expect(mockNavigate).toHaveBeenCalledTimes(1);
-    expect(mockNavigate).toHaveBeenCalledWith('/c/abc?endpoint=bedrock', { replace: true });
     expect(mockRefreshMutate).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
     jest.useRealTimers();
   });
 
-  it('falls back to current URL for unsafe stored redirect', () => {
+  it('ignores unsafe stored redirect values because local auth does not consume them', () => {
     jest.useFakeTimers();
     window.history.replaceState({}, '', '/c/new');
     sessionStorage.setItem(SESSION_KEY, 'https://evil.com/steal');
 
     renderProviderLive();
 
-    expect(mockRefreshMutate).toHaveBeenCalledTimes(1);
-    const [, refreshOptions] = mockRefreshMutate.mock.calls[0] as [
-      unknown,
-      { onSuccess: (data: unknown) => void },
-    ];
-
-    act(() => {
-      refreshOptions.onSuccess({ user: { id: '1', role: 'USER' }, token: 'new-token' });
-    });
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
-
-    expect(mockNavigate).toHaveBeenCalledWith('/c/new', { replace: true });
+    expect(mockRefreshMutate).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalledWith('https://evil.com/steal', expect.anything());
-    expect(sessionStorage.getItem(SESSION_KEY)).toBeNull();
+    expect(sessionStorage.getItem(SESSION_KEY)).toBe('https://evil.com/steal');
     jest.useRealTimers();
   });
 });
 
-describe('AuthContextProvider — silentRefresh subdirectory deployment', () => {
+describe('AuthContextProvider — local auth under subdirectory deployment', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     sessionStorage.clear();
@@ -375,26 +339,14 @@ describe('AuthContextProvider — silentRefresh subdirectory deployment', () => 
     window.history.replaceState({}, '', '/');
   });
 
-  it('strips base path from window.location.pathname before navigating (prevents /chat/chat doubling)', () => {
+  it('does not attempt refresh-based path normalization when local auth is enabled', () => {
     jest.useFakeTimers();
     window.history.replaceState({}, '', '/chat/c/abc123?model=gpt-4');
 
     renderProviderLive();
 
-    expect(mockRefreshMutate).toHaveBeenCalledTimes(1);
-    const [, refreshOptions] = mockRefreshMutate.mock.calls[0] as [
-      unknown,
-      { onSuccess: (data: unknown) => void },
-    ];
-
-    act(() => {
-      refreshOptions.onSuccess({ user: { id: '1', role: 'USER' }, token: 'new-token' });
-    });
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
-
-    expect(mockNavigate).toHaveBeenCalledWith('/c/abc123?model=gpt-4', { replace: true });
+    expect(mockRefreshMutate).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
     expect(mockNavigate).not.toHaveBeenCalledWith(
       expect.stringContaining('/chat/c/'),
       expect.anything(),
@@ -402,25 +354,15 @@ describe('AuthContextProvider — silentRefresh subdirectory deployment', () => 
     jest.useRealTimers();
   });
 
-  it('falls back to root when window.location.pathname equals the base path', () => {
+  it('leaves the browser at the base path when local auth boots there', () => {
     jest.useFakeTimers();
     window.history.replaceState({}, '', '/chat');
 
     renderProviderLive();
 
-    const [, refreshOptions] = mockRefreshMutate.mock.calls[0] as [
-      unknown,
-      { onSuccess: (data: unknown) => void },
-    ];
-
-    act(() => {
-      refreshOptions.onSuccess({ user: { id: '1', role: 'USER' }, token: 'new-token' });
-    });
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
-
-    expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
+    expect(mockRefreshMutate).not.toHaveBeenCalled();
+    expect(mockNavigate).not.toHaveBeenCalled();
+    expect(window.location.pathname).toBe('/chat');
     jest.useRealTimers();
   });
 });
@@ -435,29 +377,26 @@ describe('AuthContextProvider — logout error handling', () => {
     window.history.replaceState({}, '', '/');
   });
 
-  it('clears auth state on logout error without external redirect', () => {
+  it('keeps the local operator authenticated when logout is invoked offline', () => {
     jest.useFakeTimers();
-    const replaceSpy = jest.spyOn(window.location, 'replace').mockImplementation(() => {});
     const { getByTestId } = renderProvider();
 
-    act(() => {
-      mockCapturedLogoutOptions.onError(new Error('Logout failed'));
-    });
+    fireEvent.click(getByTestId('logout-default'));
     act(() => {
       jest.advanceTimersByTime(100);
     });
 
-    expect(replaceSpy).not.toHaveBeenCalled();
-    expect(getByTestId('consumer').getAttribute('data-authenticated')).toBe('false');
+    expect(getByTestId('consumer').getAttribute('data-authenticated')).toBe('true');
+    expect(mockNavigate).toHaveBeenCalledWith('/c/new', { replace: true });
     jest.useRealTimers();
   });
 });
 
 describe('AuthContextProvider — custom role detection and fetching', () => {
   const mockUseGetRole = jest.requireMock('~/data-provider').useGetRole;
-  const staffPermissions = {
-    name: 'STAFF',
-    permissions: { PROMPTS: { USE: true, CREATE: false } },
+  const adminPermissions = {
+    name: 'ADMIN',
+    permissions: { PROMPTS: { USE: true, CREATE: true } },
   };
 
   beforeEach(() => {
@@ -470,47 +409,23 @@ describe('AuthContextProvider — custom role detection and fetching', () => {
     window.history.replaceState({}, '', '/');
   });
 
-  it('calls useGetRole with the custom role name and enabled: true for custom role users', () => {
+  it('calls useGetRole with enabled: true for the built-in ADMIN local operator role', () => {
     jest.useFakeTimers();
 
     renderProviderLive();
 
-    const [, refreshOptions] = mockRefreshMutate.mock.calls[0] as [
-      unknown,
-      { onSuccess: (data: unknown) => void },
-    ];
-
-    act(() => {
-      refreshOptions.onSuccess({ user: { id: '1', role: 'STAFF' }, token: 'tok' });
-    });
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
-
-    const staffCalls = mockUseGetRole.mock.calls.filter(([name]: [string]) => name === 'STAFF');
-    expect(staffCalls.length).toBeGreaterThan(0);
-    const lastStaffCall = staffCalls[staffCalls.length - 1];
-    expect(lastStaffCall[1]).toEqual(expect.objectContaining({ enabled: true }));
+    const adminCalls = mockUseGetRole.mock.calls.filter(([name]: [string]) => name === 'ADMIN');
+    expect(adminCalls.length).toBeGreaterThan(0);
+    const lastAdminCall = adminCalls[adminCalls.length - 1];
+    expect(lastAdminCall[1]).toEqual(expect.objectContaining({ enabled: true }));
 
     jest.useRealTimers();
   });
 
-  it('calls useGetRole with enabled: false for USER role users', () => {
+  it('calls useGetRole with enabled: false for the custom-role sentinel in local auth', () => {
     jest.useFakeTimers();
 
     renderProviderLive();
-
-    const [, refreshOptions] = mockRefreshMutate.mock.calls[0] as [
-      unknown,
-      { onSuccess: (data: unknown) => void },
-    ];
-
-    act(() => {
-      refreshOptions.onSuccess({ user: { id: '1', role: 'USER' }, token: 'tok' });
-    });
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
 
     const sentinelCalls = mockUseGetRole.mock.calls.filter(([name]: [string]) => name === '_');
     expect(sentinelCalls.length).toBeGreaterThan(0);
@@ -521,59 +436,31 @@ describe('AuthContextProvider — custom role detection and fetching', () => {
     jest.useRealTimers();
   });
 
-  it('calls useGetRole with enabled: false for ADMIN role users', () => {
+  it('does not trigger refresh mutation while resolving local role state', () => {
     jest.useFakeTimers();
 
     renderProviderLive();
 
-    const [, refreshOptions] = mockRefreshMutate.mock.calls[0] as [
-      unknown,
-      { onSuccess: (data: unknown) => void },
-    ];
-
-    act(() => {
-      refreshOptions.onSuccess({ user: { id: '1', role: 'ADMIN' }, token: 'tok' });
-    });
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
-
-    const sentinelCalls = mockUseGetRole.mock.calls.filter(([name]: [string]) => name === '_');
-    expect(sentinelCalls.length).toBeGreaterThan(0);
-    for (const call of sentinelCalls) {
-      expect(call[1]).toEqual(expect.objectContaining({ enabled: false }));
-    }
+    expect(mockRefreshMutate).not.toHaveBeenCalled();
 
     jest.useRealTimers();
   });
 
-  it('includes custom role data in the roles context map when loaded', () => {
+  it('includes admin role data in the roles context map when loaded for local auth', () => {
     jest.useFakeTimers();
     mockUseGetRole.mockImplementation((name: string, opts?: { enabled?: boolean }) => {
-      if (name === 'STAFF' && opts?.enabled) {
-        return { data: staffPermissions };
+      if (name === 'ADMIN' && opts?.enabled) {
+        return { data: adminPermissions };
       }
       return { data: null };
     });
 
     const { getByTestId } = renderProviderLive();
 
-    const [, refreshOptions] = mockRefreshMutate.mock.calls[0] as [
-      unknown,
-      { onSuccess: (data: unknown) => void },
-    ];
-
-    act(() => {
-      refreshOptions.onSuccess({ user: { id: '1', role: 'STAFF' }, token: 'tok' });
-    });
-    act(() => {
-      jest.advanceTimersByTime(100);
-    });
-
     const rolesAttr = getByTestId('consumer').getAttribute('data-roles') ?? '{}';
     const roles = JSON.parse(rolesAttr);
-    expect(roles).toHaveProperty('STAFF');
-    expect(roles.STAFF).toEqual(staffPermissions);
+    expect(roles).toHaveProperty('ADMIN');
+    expect(roles.ADMIN).toEqual(adminPermissions);
 
     mockUseGetRole.mockReturnValue({ data: null });
     jest.useRealTimers();

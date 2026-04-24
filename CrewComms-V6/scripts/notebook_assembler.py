@@ -2,7 +2,7 @@
 """Notebook assembler — stitch rendered.md + artifacts/ into HTML + PDF.
 
 Reads a report directory produced by notebook-render:
-    /home/jay/Notebook/<report-name>/
+    ~/Notebook/<report-name>/
         rendered.md
         artifacts/
             001-hash.png
@@ -16,8 +16,8 @@ Produces:
 Both outputs land in the same report directory.
 
 Usage:
-    notebook-assemble /home/jay/Notebook/my-report
-    notebook-assemble /home/jay/Notebook/my-report --html-only
+    notebook-assemble ~/Notebook/my-report
+    notebook-assemble ~/Notebook/my-report --html-only
 """
 
 import argparse
@@ -26,7 +26,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-NOTEBOOK_ROOT = Path("/home/jay/Notebook")
+NOTEBOOK_ROOT = Path.home() / "Notebook"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 # Locate weasyprint — prefer project venv, fallback to PATH

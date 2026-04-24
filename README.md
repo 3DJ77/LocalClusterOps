@@ -9,6 +9,6 @@ This repository is a scrubbed upload copy of the current CrewComms codebase. It 
 
 ## Working Rules
 
-- Treat `CrewComms-V6/librechat.bcc.yaml` as the canonical local config snapshot.
+- Treat `CrewComms-V6/librechat.local.yaml` as the canonical local config snapshot.
 - Keep internal crew naming out of release-facing labels and notes in this upload repo.
 - Keep runtime and environment-specific noise out of commits unless intentionally needed.

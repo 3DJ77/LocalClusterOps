@@ -4,25 +4,24 @@ import { SidePanelGroup } from '~/components/SidePanel';
 import { useAgentsMapContext, useChatContext } from '~/Providers';
 import { cn } from '~/utils';
 import {
-  applyCrewStation,
-  createAgentCrewStation,
-  crewStations,
-  getCrewStationForConversation,
-} from './crewStations';
+  applyRoleStation,
+  createAgentRoleStation,
+  getRoleStationForConversation,
+  roleStations,
+} from './roleStations';
 
-interface CommanderShellProps {
+interface ConsoleLayoutProps {
   artifacts: ReactNode | null;
   children: ReactNode;
 }
 
 const labels = {
-  crewDock: 'System Dock',
-  silviaCommand: 'Command Console',
-  active: 'Active Lane',
-  model: 'model',
+  dock: 'Role Dock',
+  consoleTitle: 'Role Console',
+  active: 'Active Role',
   lease: 'lease',
-  roster: 'Built-in roles and custom assistants',
-  agentCount: 'custom',
+  roster: 'Built-in roles and saved assistants',
+  agentCount: 'saved',
   status: 'Status',
   ollamaStatus: 'Ollama local: host confirmed',
   artifacts: 'Artifacts',
@@ -30,18 +29,18 @@ const labels = {
   intake: 'Drop files or images for intake',
 };
 
-export default function CommanderShell({ artifacts, children }: CommanderShellProps) {
+export default function ConsoleLayout({ artifacts, children }: ConsoleLayoutProps) {
   const { conversation, setConversation } = useChatContext();
   const agentsMap = useAgentsMapContext();
   const agentStations = useMemo(
     () =>
       Object.values(agentsMap ?? {})
         .filter((agent) => agent != null)
-        .map((agent, index) => createAgentCrewStation(agent, index)),
+        .map((agent, index) => createAgentRoleStation(agent, index)),
     [agentsMap],
   );
-  const dockStations = useMemo(() => [...crewStations, ...agentStations], [agentStations]);
-  const activeStation = getCrewStationForConversation(conversation, dockStations);
+  const dockStations = useMemo(() => [...roleStations, ...agentStations], [agentStations]);
+  const activeStation = getRoleStationForConversation(conversation, dockStations);
 
   return (
     <div className="relative isolate grid h-full w-full grid-cols-[minmax(0,1fr)_18rem] grid-rows-[minmax(0,1fr)_6.25rem] overflow-hidden bg-transparent max-lg:grid-cols-1 max-lg:grid-rows-[minmax(0,1fr)_auto_auto]">
@@ -73,17 +72,15 @@ export default function CommanderShell({ artifacts, children }: CommanderShellPr
       >
         <div className="mb-3 shrink-0">
           <p className="text-xs font-semibold uppercase tracking-normal text-[#74adff]">
-            {labels.crewDock}
+            {labels.dock}
           </p>
-          <h2 className="text-lg font-semibold text-[#dbe9ff]">{labels.silviaCommand}</h2>
+          <h2 className="text-lg font-semibold text-[#dbe9ff]">{labels.consoleTitle}</h2>
           <div className="mt-2 rounded border border-[#274b7d] bg-[#092a5a] px-3 py-2">
             <p className="text-xs font-semibold uppercase tracking-normal text-[#74adff]">
               {labels.active}
             </p>
             <p className="mt-1 text-sm text-[#dbe9ff]">{activeStation.name}</p>
-            <p className="mt-0.5 truncate text-xs text-[#9fb4d4]">
-              {activeStation.runtime} / {activeStation.model}
-            </p>
+            <p className="mt-0.5 truncate text-xs text-[#9fb4d4]">{activeStation.runtime}</p>
           </div>
           <div className="mt-2 flex items-center justify-between text-xs text-[#9fb4d4]">
             <span>{labels.roster}</span>
@@ -102,7 +99,7 @@ export default function CommanderShell({ artifacts, children }: CommanderShellPr
               key={station.id}
               type="button"
               aria-pressed={activeStation.id === station.id}
-              onClick={() => setConversation((prev) => applyCrewStation(prev, station))}
+              onClick={() => setConversation((prev) => applyRoleStation(prev, station))}
               className={cn(
                 'relative w-full overflow-hidden rounded border px-2.5 py-2 text-left shadow-[0_6px_14px_rgba(0,10,30,0.18)] transition-colors',
                 activeStation.id === station.id
@@ -123,9 +120,7 @@ export default function CommanderShell({ artifacts, children }: CommanderShellPr
               </div>
               <p className="mt-0.5 truncate text-xs text-[#9fb4d4]">{station.state}</p>
               <p className="mt-1 truncate text-xs text-[#dbe9ff]">{station.runtime}</p>
-              <p className="mt-0.5 truncate text-xs text-[#9fb4d4]">
-                {labels.model} {station.model} / {labels.lease} {station.lease}
-              </p>
+              <p className="mt-0.5 truncate text-xs text-[#9fb4d4]">{labels.lease} {station.lease}</p>
             </button>
           ))}
         </div>

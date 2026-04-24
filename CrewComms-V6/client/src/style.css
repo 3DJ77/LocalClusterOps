@@ -3055,7 +3055,7 @@ body {
   border-color: #274b7d;
 }
 
-.crewcomms-surface {
+.local-chat-surface {
   --brand-purple: #74adff;
   --presentation: #001933;
   --text-primary: #dbe9ff;
@@ -3108,54 +3108,54 @@ body {
   color: #dbe9ff;
 }
 
-.crewcomms-surface .bg-presentation {
+.local-chat-surface .bg-presentation {
   background-color: #001933 !important;
 }
 
-.crewcomms-surface .bg-surface-chat,
-.crewcomms-surface form:has(#prompt-textarea) > div > div > div {
+.local-chat-surface .bg-surface-chat,
+.local-chat-surface form:has(#prompt-textarea) > div > div > div {
   background-color: #062451 !important;
 }
 
-.crewcomms-surface .bg-surface-primary-alt {
+.local-chat-surface .bg-surface-primary-alt {
   background-color: #031733 !important;
 }
 
-.crewcomms-surface .bg-surface-primary {
+.local-chat-surface .bg-surface-primary {
   background-color: #061d42 !important;
 }
 
-.crewcomms-surface .bg-surface-secondary {
+.local-chat-surface .bg-surface-secondary {
   background-color: #092a5a !important;
 }
 
-.crewcomms-surface .bg-surface-active-alt {
+.local-chat-surface .bg-surface-active-alt {
   background-color: #164a8a !important;
 }
 
-.crewcomms-surface .border-border-light {
+.local-chat-surface .border-border-light {
   border-color: #1b3766 !important;
 }
 
-.crewcomms-surface .text-text-primary,
-.crewcomms-surface .text-token-text-primary {
+.local-chat-surface .text-text-primary,
+.local-chat-surface .text-token-text-primary {
   color: #dbe9ff !important;
 }
 
-.crewcomms-surface .text-text-secondary,
-.crewcomms-surface .text-token-text-secondary {
+.local-chat-surface .text-text-secondary,
+.local-chat-surface .text-token-text-secondary {
   color: #9fb4d4 !important;
 }
 
-.crewcomms-surface .text-text-secondary-alt {
+.local-chat-surface .text-text-secondary-alt {
   color: #8198bb !important;
 }
 
-.crewcomms-surface .message-render {
+.local-chat-surface .message-render {
   border-radius: 0.75rem;
 }
 
-.crewcomms-surface .text-message {
+.local-chat-surface .text-message {
   border: 1px solid #274b7d;
   border-radius: 0.75rem;
   background: linear-gradient(180deg, #092a5a 0%, #061d42 100%);
@@ -3163,48 +3163,48 @@ body {
   padding: 0.8rem 1rem;
 }
 
-.crewcomms-surface .user-turn .text-message {
+.local-chat-surface .user-turn .text-message {
   border-color: #3b6fb3;
   background: linear-gradient(180deg, #0d356b 0%, #092a5a 100%);
 }
 
-.crewcomms-surface .message-content,
-.crewcomms-surface .message-content * {
+.local-chat-surface .message-content,
+.local-chat-surface .message-content * {
   color: #dbe9ff;
 }
 
-.crewcomms-surface .user-turn .message-content,
-.crewcomms-surface .user-turn .message-content * {
+.local-chat-surface .user-turn .message-content,
+.local-chat-surface .user-turn .message-content * {
   color: #f5f9ff;
 }
 
-.crewcomms-surface .message-content a,
-.crewcomms-surface a {
+.local-chat-surface .message-content a,
+.local-chat-surface a {
   color: #74adff;
 }
 
-.crewcomms-surface #prompt-textarea {
+.local-chat-surface #prompt-textarea {
   color: #dbe9ff !important;
   caret-color: #74adff;
 }
 
-.crewcomms-surface #prompt-textarea::placeholder {
+.local-chat-surface #prompt-textarea::placeholder {
   color: #9fb4d4 !important;
 }
 
-.crewcomms-surface #send-button {
+.local-chat-surface #send-button {
   background: #2f7fff !important;
   border: 1px solid #77a8f7;
   color: #ffffff !important;
   opacity: 1;
 }
 
-.crewcomms-surface #send-button:disabled {
+.local-chat-surface #send-button:disabled {
   background: #17487f !important;
   border-color: #274b7d;
   opacity: 0.35;
 }
 
-.crewcomms-surface .bg-green-500 {
+.local-chat-surface .bg-green-500 {
   background-color: #74adff !important;
 }

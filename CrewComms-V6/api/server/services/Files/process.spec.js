@@ -140,7 +140,7 @@ describe('processAgentFileUpload', () => {
   });
 
   describe('message attachment text context', () => {
-    test('stores Local-Bridge text message attachments as prompt-readable text context by default', async () => {
+    test('stores Task Runtime text message attachments as prompt-readable text context by default', async () => {
       const { parseText } = require('@librechat/api');
       const { createFile, addAgentResourceFile } = require('~/models');
       parseText.mockResolvedValueOnce({ text: 'crew upload secret', bytes: 18 });
@@ -157,7 +157,7 @@ describe('processAgentFileUpload', () => {
           agent_id: undefined,
           tool_resource: undefined,
           message_file: 'true',
-          endpoint: 'Local-Bridge',
+          endpoint: 'Task Runtime',
           endpointType: EModelEndpoint.custom,
         }),
       });
